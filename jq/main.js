@@ -1,13 +1,8 @@
 var ctx;
 
 $(document).ready(function () {
-	
-	
-	
 	$('textarea').on('keydown', textEntered);
-	
-		
-	
+
 	loadModel().then((results) => { 
 		ctx = results;
 		console.log('ready to predict') 
@@ -18,18 +13,20 @@ $(document).ready(function () {
 const contextSize = 5;
 let wordsTagged = [];
 
-
 function createWindowedDataset(data){
 	let windowed = [];
-	const sequenceLength = 5;
-	for(let i = 0; i< data.length-sequenceLength ; i++){
-		windowed[i]=data.slice(i, i+sequenceLength);
+	for(let i = 0; i< data.length-contextSize ; i++){
+		windowed[i]=data.slice(i, i+contextSize);
 	}
 	return windowed;
 }
 
 function textEntered() {
-	let words = this.value.split(' ');
+	
+	let words = [];
+	for (let word of this.value.split(' ')){
+		words[words.length] = {word: word, pos: null};
+	}
 
 	if (words.length >= contextSize) {
 		//Create the windowed dataset of width contextSize
@@ -39,55 +36,76 @@ function textEntered() {
 		tags = []
 		for (row of windowed){
 			const features = [];
+
 			//features.append(pos_to_index[row[1][1]])
-			features[features.length] = 0;
+			if (row[1].pos){
+				features[features.length] = ctx['pos_to_index.json'][row[1].pos];
+			}else{
+				features[features.length] = ctx['pos_to_index.json'][ctx['most_common_tag_for_word.json'][row[1].word]];
+			}
+
 			//features.append(pos_to_index[row[0][1]])
-			features[features.length] = 0;
+			if(row[0].pos){
+				features[features.length] = ctx['pos_to_index.json'][row[0].pos];
+			}else{
+				features[features.length] = ctx['pos_to_index.json'][ctx['most_common_tag_for_word.json'][row[0].word]];
+			}
+			
 			//features.append(word_to_index[row[2][0][-3:]])
-			features[features.length] = ctx.wordToIndex[row[2].slice(-3,)];
+			features[features.length] = ctx['word_to_index.json'][row[2].word.slice(-3,)];
 
 			// features.append(word_to_index[row[2][0][0]])
+			features[features.length] = ctx['word_to_index.json'][row[2].word[0]];
+
 			// features.append(word_to_index[row[2][0]])
+			features[features.length] = ctx['word_to_index.json'][row[2].word];
+
 			// features.append(word_to_index[row[1][0]])
+			features[features.length] = ctx['word_to_index.json'][row[1].word];
+
 			// features.append(word_to_index[row[1][0][-3:]])
+			features[features.length] = ctx['word_to_index.json'][row[1].word.slice(-3,)];
+
 			// features.append(word_to_index[row[0][0]])
+			features[features.length] = ctx['word_to_index.json'][row[0].word];
+
 			// features.append(word_to_index[row[3][0]])
+			features[features.length]=ctx['word_to_index.json'][row[3].word];
+
 			// features.append(word_to_index[row[3][0][-3:]])
+			features[features.length]=ctx['word_to_index.json'][row[3].word.slice(-3,)];
+
 			// features.append(word_to_index[row[4][0]])
+			features[features.length]= ctx['word_to_index.json'][row[4].word];
+
+			//don't need this one as it is the target
 			// features.append(pos_to_index[row[2][1]])
-			console.log(features);
-			features.length = 11;
-			features.fill(0, features.length);
-			tags[tags.length] = tf.argMax(ctx.model.predict(tf.tensor2d(features, shape=[1,11])).arraySync()[0]).arraySync();
+
+			// while you are adding and removing features it is handy to uncommend these to keep the predict code functioning albeit it with partially dummy input.
+			//features.length = 11;
+			//features.fill(0, features.length);
+			
+			console.log('features '+features);
+
+			tags[tags.length] = ctx['index_to_pos.json'][tf.argMax(ctx.model.predict(tf.tensor2d(features, shape=[1,11])).arraySync()[0]).arraySync()];
 
 		}
-
-
-		//Run predict with each of the arrays
-		//decode the responses and output the pairs.
-
-		wordsTagged = [];
-		for (word of words) {
-			wordsTagged[wordsTagged.length] = { "POS": "POS", "word": word };
-		}
-		console.log(wordsTagged);
-	
+		console.log(tags);
 	}
 }
 
 async function loadModel() {
 	var results = {};
 
-	$.getJSON('word_to_index.json', (data) => {
-		results.wordToIndex = data;
-	});
-
-	$.getJSON('pos_to_index.json', (data) => {
-		results.posToIndex = data;
-	});
+	const jsonToLoad = ['word_to_index.json', 'pos_to_index.json', 'most_common_tag_for_word.json', 'index_to_pos.json'];
+	for (let f of jsonToLoad){
+		console.log(f);
+		$.getJSON(f, (data) => {
+			results[f] = data;
+		});
+	}
 
 	results.model = await tf.loadGraphModel('http://127.0.0.1:8887/tfjs_model/model.json');
-
 	return results;
 }
 
