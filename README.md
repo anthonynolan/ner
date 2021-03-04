@@ -10,3 +10,4 @@ This is the repo associated with [this blog](https://ml-month.blogspot.com/)
 ## Tasks
 1. ~Try some POS tagging first. ~
 2. Convert this to tflite and consume in a basic js app.
+finding this very useful: https://www.kaggle.com/bavalpreet26/ner-using-crf/notebook
