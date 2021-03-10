@@ -104,7 +104,7 @@ async function loadModel() {
 		$.getJSON(f, data => results[f] = data);
 	}
 
-	results.model = await tf.loadGraphModel('http://127.0.0.1:8887/tfjs_pos_model/model.json');
+	results.model = await tf.loadGraphModel('tfjs_pos_model/model.json');
 	return results;
 }
 
