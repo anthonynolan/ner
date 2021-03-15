@@ -14,6 +14,7 @@ CORS(app)
 def get_par_by_id(id):
     selector = {"id": {'$eq': int(id)}}    
     doc = db.get_query_result(selector)[0][0]
+    print(doc)
     return jsonify(doc)
 
 @app.route('/paragraph/', methods=['POST'])
