@@ -34,6 +34,16 @@ def save_modified_paragraph(id):
     doc.save()
     return jsonify(doc)
 
+@app.route('/pos/<id>', methods=['PUT'])
+def pos_paragraph(id):
+    selector = {"id": {'$eq': int(id)}}
+    query_result = db.get_query_result(selector)[0][0]
+    doc = db[query_result['_id']]
+    doc['content'] = doc['content'].upper()
+    doc.save()
+    return jsonify(doc)
+
+
 @app.route('/paragraph/<id>', methods=['DELETE'])
 def delete_paragraph(id):
     selector = {"id": {'$eq': int(id)}}
