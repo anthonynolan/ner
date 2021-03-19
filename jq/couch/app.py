@@ -7,14 +7,18 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json
 import requests
-
+from nltk import word_tokenize
+import numpy as np
 import pickle
 
 word_to_index = pickle.load(open('../../data/word_to_index.pk', 'rb'))
 pos_to_index = pickle.load(open('../../data/pos_to_index.pk', 'rb'))
 index_to_pos = pickle.load(open('../../data/index_to_pos.pk', 'rb'))
 winners = pickle.load(open('../../data/winners.pk', 'rb'))
+
 UNK_WORD = '<UNK_WORD>'
+sequence_length = 5
+
 
 app = Flask(__name__)
 CORS(app)
@@ -24,15 +28,11 @@ CORS(app)
 def get_par_by_id(id):
     selector = {"id": {'$eq': int(id)}}    
     doc = db.get_query_result(selector)[0][0]
-    print(doc)
     return jsonify(doc)
 
 @app.route('/paragraph/', methods=['POST'])
 def create_paragraph():
-    print(request.json['content'])
-    print(request.json['id'])
     doc = db.create_document({"content": request.json['content'], "id": request.json['id']})
-    print(doc)
     return jsonify(doc)
 
 @app.route('/paragraph/<id>', methods=['PUT'])
@@ -53,16 +53,10 @@ def pos_paragraph(id):
     results = []
     for a in zip(tokens, parts_of_speech):
         results.append(a)
-    
     doc['words'] = results
-
     doc.save()
     return jsonify(doc)
 
-
-from nltk import word_tokenize
-# from utils import create_windowed_dataset, build_features_pos
-import numpy as np
 
 def create_windowed_dataset(input_dat, sequence_length, mode='train'):
     matrix = []
@@ -75,6 +69,7 @@ def create_windowed_dataset(input_dat, sequence_length, mode='train'):
             matrix.append([(a, None) for a in input_dat[index:index+sequence_length]])
         index+=sequence_length
     return matrix
+
 def build_features(matrix, mode='train'):
     transformed_matrix = []
 
@@ -108,7 +103,6 @@ def build_features(matrix, mode='train'):
         transformed_matrix.append(features)
     return transformed_matrix
 
-sequence_length = 5
 
 def run_predict_on_paragraph(par):
     tokens = word_tokenize(par)
