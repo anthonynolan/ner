@@ -18,10 +18,43 @@ winners = pickle.load(open('../../data/winners.pk', 'rb'))
 
 UNK_WORD = '<UNK_WORD>'
 sequence_length = 5
+DB_URL = 'http://127.0.0.1:5984'
 
 
 app = Flask(__name__)
 CORS(app)
+
+def get_uuid():
+    return requests.get(DB_URL+"/_uuids").json()['uuids'][0]
+
+
+# individual books
+@app.route('/book/<id>', methods=['GET'])
+def get_book_by_id(id):
+    book = requests.get(DB_URL+f'/books/{id}', auth=('admin', 'password1')).json()
+    return jsonify(book)
+
+@app.route('/book/', methods=['POST'])
+def create_book():
+    response = requests.put(DB_URL+'/books/'+get_uuid(), 
+    data=json.dumps({"title": request.json['title'], "author": request.json['author']}), 
+    auth=('admin', 'password1')).json()
+    return jsonify(response)
+
+# all books
+@app.route('/books', methods=['GET'])
+def get_books():
+    book_list = requests.get(DB_URL+'/books/_all_docs', auth=('admin', 'password1')).json()
+    books = []
+    for book in book_list['rows']:
+        books.append(requests.get(DB_URL+'/books/'+book['id'], auth=('admin', 'password1')).json())
+    print(books)
+    print(jsonify(books))
+    return jsonify({'books': books})
+
+
+
+
 
 
 @app.route('/paragraph/<id>', methods=['GET'])
@@ -137,6 +170,7 @@ def delete_paragraph(id):
     return jsonify(doc)
 
 if __name__=='__main__':
-    client = CouchDB('admin', 'password1', url='http://127.0.0.1:5984', connect=True)  
+    client = CouchDB('admin', 'password1', url=DB_URL, connect=True)  
     db = client['novel']
+
     app.run(debug=True)
