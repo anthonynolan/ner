@@ -11,10 +11,10 @@ from nltk import word_tokenize
 import numpy as np
 import pickle
 
-word_to_index = pickle.load(open('../../data/word_to_index.pk', 'rb'))
-pos_to_index = pickle.load(open('../../data/pos_to_index.pk', 'rb'))
-index_to_pos = pickle.load(open('../../data/index_to_pos.pk', 'rb'))
-winners = pickle.load(open('../../data/winners.pk', 'rb'))
+word_to_index = pickle.load(open('../data/word_to_index.pk', 'rb'))
+pos_to_index = pickle.load(open('../data/pos_to_index.pk', 'rb'))
+index_to_pos = pickle.load(open('../data/index_to_pos.pk', 'rb'))
+winners = pickle.load(open('../data/winners.pk', 'rb'))
 
 UNK_WORD = '<UNK_WORD>'
 sequence_length = 5
@@ -40,6 +40,21 @@ def create_book():
     data=json.dumps({"title": request.json['title'], "author": request.json['author']}), 
     auth=('admin', 'password1')).json()
     return jsonify(response)
+
+@app.route('/book/<id>/<rev>', methods=['DELETE'])
+def delete_book_by_id(id, rev):
+    print(id, rev)
+    book = requests.delete(DB_URL+f'/books/{id}?rev={rev}', auth=('admin', 'password1')).json()
+    return jsonify(book)
+
+@app.route('/book/<id>/<rev>', methods=['PUT'])
+def update_book(id, rev):
+    response = requests.put(DB_URL+f'/books/{id}', 
+    data=json.dumps({"_rev": rev, "title": request.json['title'], "author": request.json['author']}), 
+    auth=('admin', 'password1')).json()
+    return jsonify(response)
+
+
 
 # all books
 @app.route('/books', methods=['GET'])
@@ -76,6 +91,15 @@ def save_modified_paragraph(id):
     doc['content'] = request.json['content']
     doc.save()
     return jsonify(doc)
+
+@app.route('/paragraph/<id>', methods=['DELETE'])
+def delete_paragraph(id):
+    selector = {"id": {'$eq': int(id)}}
+    query_result = db.get_query_result(selector)[0][0]
+    doc = db[query_result['_id']]
+    doc.delete()
+    return jsonify(doc)
+
 
 @app.route('/pos/<id>', methods=['PUT'])
 def pos_paragraph(id):
@@ -161,13 +185,6 @@ def run_predict_on_paragraph(par):
         
     return tokens, lead_pos_tags+parts_of_speech_from_serving+lag_pos_tags
 
-@app.route('/paragraph/<id>', methods=['DELETE'])
-def delete_paragraph(id):
-    selector = {"id": {'$eq': int(id)}}
-    query_result = db.get_query_result(selector)[0][0]
-    doc = db[query_result['_id']]
-    doc.delete()
-    return jsonify(doc)
 
 if __name__=='__main__':
     client = CouchDB('admin', 'password1', url=DB_URL, connect=True)  
