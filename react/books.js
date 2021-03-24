@@ -4,7 +4,7 @@ class BookList extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = { networkError: false };
         this.fetchAllBooks = this.fetchAllBooks.bind(this);
     }
 
@@ -12,7 +12,8 @@ class BookList extends React.Component {
         console.log('fetch');
         fetch('http://localhost:5000/books')
             .then(resp => resp.json())
-            .then(data => this.setState({ books: data['books'] }));
+            .then(data => this.setState({ books: data['books'] }))
+            .catch((e) => this.setState({ networkError: true }));
     }
 
     componentDidMount() {
@@ -20,6 +21,8 @@ class BookList extends React.Component {
     }
 
     render() {
+        if (this.state.networkError)
+            return <NetWorkError />;
         let content;
         if (this.state.books) {
             content = this.state.books.map((book) => <Book
@@ -113,5 +116,7 @@ class NewBook extends React.Component {
         </div>;
     }
 }
+
+const NetWorkError = () => <div className="network-error">Network Error</div>;
 
 ReactDOM.render(<BookList />, document.querySelector('#books-container'));

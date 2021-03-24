@@ -1,0 +1,28 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+textarea{
+  width: 50%;
+}
+.book{
+  cursor: pointer;
+}
+.network-error{
+  width: 100%;
+  font: 5em sans-serif;
+  background-color: red;
+  border: 5px black solid;
+  border-radius: .1em;
+  text-align: center;
+}
