@@ -4,21 +4,22 @@ import Button from '@material-ui/core/Button';
 
 
 
-class NewBook extends React.Component {
+class EditBook extends React.Component {
 
     constructor(props) {
         super(props)
-        this.state = { author: '', title: '' };
+        console.log(props.book);
+        this.state = { author: props.book.author, title: props.book.title };
         this.authorChanged = this.authorChanged.bind(this);
         this.titleChanged = this.titleChanged.bind(this);
-        this.saveNewBook = this.saveNewBook.bind(this);
+        this.saveExistingBook = this.saveExistingBook.bind(this);
         this.onSubmit = this.onSubmit.bind(this);
     }
 
-    saveNewBook(author, title) {
-        fetch('http://localhost:5000/book/', {
-            method: 'POST',
-            body: JSON.stringify({ author: author, title: title }),
+    saveExistingBook() {
+        fetch(`http://localhost:5000/book/${this.props.book._id}/${this.props.book._rev}`, {
+            method: 'PUT',
+            body: JSON.stringify({ author: this.state.author ? this.state.author : '', title: this.state.title ? this.state.title : '' }),
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -39,21 +40,21 @@ class NewBook extends React.Component {
         // event.preventDefault();
         if (!this.state.author && !this.state.title) { return; }
 
-        this.saveNewBook(this.state.author, this.state.title);
+        this.saveExistingBook(this.state.author, this.state.title);
         this.setState({ author: '', title: '' });
 
-        ['author', 'title'].forEach((e) => document.getElementById(e).value = '');
+        ['author_edit', 'title_edit'].forEach((e) => document.getElementById(e).value = '');
 
     }
 
     render() {
-        
+
         return <form>
-            <TextField id="author" label="Author" onChange={this.authorChanged} />
-            <TextField id="title" label="Title" onChange={this.titleChanged} />
+            <TextField id="author_edit" label="Author" value={this.state.author} onChange={this.authorChanged} />
+            <TextField id="title_edit" label="Title" value={this.state.title} onChange={this.titleChanged} />
             <Button variant="outlined" color="primary" onClick={() => this.onSubmit()}>Save</Button>
         </form>;
     }
 }
 
-export default NewBook;
+export default EditBook;
