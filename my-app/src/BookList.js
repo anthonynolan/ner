@@ -23,6 +23,11 @@ class BookList extends React.Component {
     componentDidMount() {
         this.fetchAllBooks();
     }
+    componentDidUpdate(oldProps){
+        if(oldProps!==this.props){
+            this.fetchAllBooks();
+        }
+    }
 
     render() {
         if (this.state.networkError)
